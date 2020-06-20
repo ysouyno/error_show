@@ -1,7 +1,7 @@
 use std::env;
-use winapi::um::winbase;
+use winapi::um::{ winbase, winnt };
 use std::ptr;
-use winapi::um::winnt;
+use winapi::shared::minwindef;
 
 pub unsafe fn pwstr_to_string(ptr: winnt::PWSTR) -> String {
     use std::slice::from_raw_parts;
@@ -13,29 +13,35 @@ pub unsafe fn pwstr_to_string(ptr: winnt::PWSTR) -> String {
 }
 
 fn format_message(err_num: i32) -> String {
-    const MAX_CHARACTERS: u16 = 1024;
-    let mut err_msg = [winnt::WCHAR::default(); MAX_CHARACTERS as _];
+    let mut err_msg: winnt::LPWSTR = ptr::null_mut();
     let ret = unsafe {
         winbase::FormatMessageW(
-            // winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER |
             winbase::FORMAT_MESSAGE_FROM_SYSTEM |
             winbase::FORMAT_MESSAGE_IGNORE_INSERTS,
             ptr::null_mut(),
             err_num as u32,
             winnt::MAKELANGID(winnt::LANG_NEUTRAL,
                               winnt::SUBLANG_DEFAULT) as u32,
-            err_msg.as_mut_ptr(),
-            MAX_CHARACTERS.into(),
+            (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
+            0,
             ptr::null_mut()
         )
     };
 
-    println!("ret: {}", ret);
-    let ret = unsafe {
-        pwstr_to_string(err_msg.as_mut_ptr())
-    };
+    if ret == 0 {
+        String::from("Unknown")
+    } else {
+        let ret = unsafe {
+            pwstr_to_string(err_msg)
+        };
 
-    ret
+        unsafe {
+            winbase::LocalFree(err_msg as minwindef::HLOCAL);
+        }
+
+        ret
+    }
 }
 
 fn main() {
@@ -46,5 +52,5 @@ fn main() {
 
     let err = args[1].parse::<i32>().unwrap();
 
-    println!("{}: {}", err, format_message(err));
+    println!("Error({}): {}", err, format_message(err));
 }
