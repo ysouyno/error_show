@@ -3,5 +3,5 @@
 ## Usage
 
 ``` shellsession
-cargo run <error number>
+cargo run <errno>
 ```

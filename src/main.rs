@@ -18,13 +18,12 @@ pub fn error_string(errno: i32) -> String {
     use std::os::raw::c_int;
     use std::str;
 
-    const TMPBUF_SZ: usize = 128;
     extern "C" {
         #[cfg_attr(any(target_os = "linux"), link_name = "__xpg_strerror_r")]
         fn strerror_r(errnum: c_int, buf: *mut c_char, buflen: libc::size_t) -> c_int;
     }
 
-    let mut buf = [0 as c_char; TMPBUF_SZ];
+    let mut buf = [0 as c_char; 128];
     let p = buf.as_mut_ptr();
 
     unsafe {
@@ -50,7 +49,7 @@ pub unsafe fn pwstr_to_string(ptr: winnt::PWSTR) -> String {
 }
 
 #[cfg(target_os = "windows")]
-fn error_string(err_num: i32) -> String {
+fn error_string(errno: i32) -> String {
     let mut err_msg: winnt::LPWSTR = ptr::null_mut();
     let ret = unsafe {
         winbase::FormatMessageW(
@@ -58,7 +57,7 @@ fn error_string(err_num: i32) -> String {
                 | winbase::FORMAT_MESSAGE_FROM_SYSTEM
                 | winbase::FORMAT_MESSAGE_IGNORE_INSERTS,
             ptr::null_mut(),
-            err_num as u32,
+            errno as u32,
             winnt::MAKELANGID(winnt::LANG_NEUTRAL, winnt::SUBLANG_DEFAULT) as u32,
             (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
             0,
@@ -82,7 +81,8 @@ fn error_string(err_num: i32) -> String {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        println!("Usage: {} {}", args[0], "err_num");
+        println!("Usage: {} errno", args[0]);
+        return;
     }
 
     let err = args[1].parse::<i32>().unwrap();
