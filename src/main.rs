@@ -1,4 +1,5 @@
 use std::env;
+use std::i64;
 
 #[cfg(target_os = "windows")]
 use std::ptr;
@@ -140,7 +141,15 @@ fn main() {
         return;
     }
 
-    let errno = args[1].parse::<i32>().unwrap();
-
-    println!("Error({}): {}", errno, error_string(errno));
+    if args[1].starts_with("0x") {
+        let errno = args[1].trim_start_matches("0x");
+        let errno = i64::from_str_radix(errno, 16);
+        match errno {
+            Ok(errno) => println!("Error({}): {}", errno, error_string(errno as i32)),
+            _ => println!("Unknow"),
+        }
+    } else {
+        let errno = args[1].parse::<i32>().unwrap();
+        println!("Error({}): {}", errno, error_string(errno));
+    }
 }
