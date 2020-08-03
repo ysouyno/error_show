@@ -1,4 +1,4 @@
-# rust_error_show
+# error_show
 
 ## Usage
 
