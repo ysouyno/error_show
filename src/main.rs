@@ -1,4 +1,3 @@
-use std::env;
 use std::i64;
 
 #[cfg(target_os = "windows")]
@@ -10,6 +9,16 @@ use winapi::um::{libloaderapi, winbase, winnt};
 
 #[cfg(target_os = "linux")]
 extern crate libc;
+
+use clap::Clap;
+
+/// Show error code information
+#[derive(Clap)]
+#[clap(version = "0.1", author = "ysouyno <ysouyno@163.com>")]
+struct Opts {
+    /// Decimal or hexadecimal error code
+    errno: String,
+}
 
 #[cfg(target_os = "windows")]
 pub unsafe fn pwstr_to_string(ptr: winnt::PWSTR) -> String {
@@ -107,7 +116,6 @@ fn error_string(errno: i32) -> String {
 }
 
 #[cfg(target_os = "linux")]
-// from https://stackoverflow.com/questions/40710115/how-does-one-get-the-error-message-as-provided-by-the-system-without-the-os-err
 pub fn error_string(errno: i32) -> String {
     use std::ffi::CStr;
     use std::os::raw::c_char;
@@ -135,21 +143,17 @@ pub fn error_string(errno: i32) -> String {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        println!("Usage: {} errno", args[0]);
-        return;
-    }
+    let opts = Opts::parse();
 
-    if args[1].starts_with("0x") {
-        let errno = args[1].trim_start_matches("0x");
+    if opts.errno.starts_with("0x") {
+        let errno = opts.errno.trim_start_matches("0x");
         let errno = i64::from_str_radix(errno, 16);
         match errno {
             Ok(errno) => println!("Error({}): {}", errno, error_string(errno as i32)),
             _ => println!("Unknow"),
         }
     } else {
-        let errno = args[1].parse::<i32>().unwrap();
+        let errno = opts.errno.parse::<i32>().unwrap();
         println!("Error({}): {}", errno, error_string(errno));
     }
 }
