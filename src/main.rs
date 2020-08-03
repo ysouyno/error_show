@@ -10,11 +10,10 @@ use winapi::um::{libloaderapi, winbase, winnt};
 #[cfg(target_os = "linux")]
 extern crate libc;
 
-use clap::Clap;
+use structopt::StructOpt;
 
 /// Show error code information
-#[derive(Clap)]
-#[clap(version = "0.1", author = "ysouyno <ysouyno@163.com>")]
+#[derive(StructOpt, Debug)]
 struct Opts {
     /// Decimal or hexadecimal error code
     errno: String,
@@ -143,7 +142,7 @@ pub fn error_string(errno: i32) -> String {
 }
 
 fn main() {
-    let opts = Opts::parse();
+    let opts = Opts::from_args();
 
     if opts.errno.starts_with("0x") {
         let errno = opts.errno.trim_start_matches("0x");
