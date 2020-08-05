@@ -14,6 +14,7 @@ use structopt::StructOpt;
 
 /// Show error code information
 #[derive(StructOpt, Debug)]
+#[structopt(global_settings(&[structopt::clap::AppSettings::AllowNegativeNumbers]))]
 struct Opts {
     /// Decimal or hexadecimal error code
     errno: String,
@@ -148,11 +149,11 @@ fn main() {
         let errno = opts.errno.trim_start_matches("0x");
         let errno = i64::from_str_radix(errno, 16);
         match errno {
-            Ok(errno) => println!("Error({}): {}", errno, error_string(errno as i32)),
+            Ok(errno) => println!("Error({}): {}", opts.errno, error_string(errno as i32)),
             _ => println!("Unknow"),
         }
     } else {
         let errno = opts.errno.parse::<i32>().unwrap();
-        println!("Error({}): {}", errno, error_string(errno));
+        println!("Error({}): {}", opts.errno, error_string(errno));
     }
 }

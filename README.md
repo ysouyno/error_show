@@ -12,7 +12,7 @@ cargo install error_show
 
 ``` shellsession
 % error_show -h
-error_show 0.1.0
+error_show 0.1.1
 Show error code information
 
 USAGE:
@@ -44,6 +44,9 @@ Error(12006): URL 未使用可识别的协议
 > error_show 2
 Error(2): 系统找不到指定的文件。
 
-> error_show 0x80020005
-Error(2147614725): 类型不匹配。
+> error_show.exe 0x80004002
+Error(0x80004002): 不支持此接口
+
+> error_show.exe -2147467262
+Error(-2147467262): 不支持此接口
 ```
