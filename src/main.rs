@@ -56,10 +56,12 @@ fn error_string_wininet(errno: i32) -> String {
             winbase::FormatMessageW(
                 winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER
                     | winbase::FORMAT_MESSAGE_FROM_HMODULE
-                    | winbase::FORMAT_MESSAGE_FROM_SYSTEM,
+                    | winbase::FORMAT_MESSAGE_FROM_SYSTEM
+                    | winbase::FORMAT_MESSAGE_IGNORE_INSERTS
+                    | winbase::FORMAT_MESSAGE_MAX_WIDTH_MASK,
                 hmodule as minwindef::LPCVOID,
                 errno as u32,
-                winnt::MAKELANGID(winnt::LANG_NEUTRAL, winnt::SUBLANG_DEFAULT) as u32,
+                winnt::MAKELANGID(winnt::LANG_ENGLISH, winnt::SUBLANG_DEFAULT) as u32,
                 (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
                 0,
                 ptr::null_mut(),
@@ -71,7 +73,7 @@ fn error_string_wininet(errno: i32) -> String {
         }
 
         if ret == 0 {
-            String::from("Unknown")
+            String::from("Unknown.")
         } else {
             let ret = unsafe { pwstr_to_string(err_msg) };
 
@@ -82,7 +84,7 @@ fn error_string_wininet(errno: i32) -> String {
             ret
         }
     } else {
-        String::from("Unknown")
+        String::from("Unknown.")
     }
 }
 
@@ -91,10 +93,13 @@ fn error_string(errno: i32) -> String {
     let mut err_msg: winnt::LPWSTR = ptr::null_mut();
     let ret = unsafe {
         winbase::FormatMessageW(
-            winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER | winbase::FORMAT_MESSAGE_FROM_SYSTEM,
+            winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER
+                | winbase::FORMAT_MESSAGE_FROM_SYSTEM
+                | winbase::FORMAT_MESSAGE_IGNORE_INSERTS
+                | winbase::FORMAT_MESSAGE_MAX_WIDTH_MASK,
             ptr::null_mut(),
             errno as u32,
-            winnt::MAKELANGID(winnt::LANG_NEUTRAL, winnt::SUBLANG_DEFAULT) as u32,
+            winnt::MAKELANGID(winnt::LANG_ENGLISH, winnt::SUBLANG_DEFAULT) as u32,
             (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
             0,
             ptr::null_mut(),
@@ -150,7 +155,7 @@ fn main() {
         let errno = i64::from_str_radix(errno, 16);
         match errno {
             Ok(errno) => println!("Error({}): {}", opts.errno, error_string(errno as i32)),
-            _ => println!("Unknow"),
+            _ => println!("Unknown."),
         }
     } else {
         let errno = opts.errno.parse::<i32>().unwrap();
