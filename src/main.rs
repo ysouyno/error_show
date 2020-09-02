@@ -13,6 +13,11 @@ use winapi::um::{libloaderapi, winbase, winnt};
 struct Opts {
     /// Decimal or hexadecimal error code
     errno: String,
+
+    #[cfg(windows)]
+    #[structopt(short, long)]
+    /// Is this an ntstatus code on windows?
+    ntstatus: bool,
 }
 
 #[cfg(target_os = "windows")]
@@ -167,10 +172,12 @@ fn main() {
     }
 
     #[cfg(windows)]
-    unsafe {
-        let dos_errno = ntapi::ntrtl::RtlNtStatusToDosError(errno);
-        if dos_errno != winapi::shared::winerror::ERROR_MR_MID_NOT_FOUND {
-            errno = dos_errno as i32;
+    if opts.ntstatus {
+        unsafe {
+            let dos_errno = ntapi::ntrtl::RtlNtStatusToDosError(errno);
+            if dos_errno != winapi::shared::winerror::ERROR_MR_MID_NOT_FOUND {
+                errno = dos_errno as i32;
+            }
         }
     }
 
