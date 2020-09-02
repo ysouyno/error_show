@@ -11,16 +11,17 @@ cargo install error_show
 ## Usage
 
 ``` shellsession
-% error_show -h
-error_show 0.1.1
+> error_show -h
+error_show 0.1.2
 Show error code information
 
 USAGE:
-    error_show <errno>
+    error_show [FLAGS] <errno>
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help        Prints help information
+    -n, --ntstatus    Is this an ntstatus code on windows?
+    -V, --version     Prints version information
 
 ARGS:
     <errno>    Decimal or hexadecimal error code
@@ -28,25 +29,34 @@ ARGS:
 
 ## Examples
 
-On Linux:
+On Windows(Support NTSTATUS, HRESULT and WININET error code):
+
+``` shellsession
+> error_show 0xC0000005
+Error(0xC0000005): Unknown.
+
+> error_show -n 0xC0000005
+Error(0xC0000005): Invalid access to memory location.
+
+> error_show 2
+Error(2): The system cannot find the file specified.
+
+> error_show -n 2
+Error(2): ERROR_WAIT_2
+
+> error_show 12006
+Error(12006): The URL does not use a recognized protocol
+
+> error_show 0x80004002
+Error(0x80004002): No such interface supported
+
+> error_show -2147467262
+Error(-2147467262): No such interface supported
+```
+
+On Linux or macOS:
 
 ``` shellsession
 % error_show 12
 Error(12): Cannot allocate memory
-```
-
-On Windows:
-
-``` shellsession
-> error_show 12006
-Error(12006): URL 未使用可识别的协议
-
-> error_show 2
-Error(2): 系统找不到指定的文件。
-
-> error_show.exe 0x80004002
-Error(0x80004002): 不支持此接口
-
-> error_show.exe -2147467262
-Error(-2147467262): 不支持此接口
 ```
