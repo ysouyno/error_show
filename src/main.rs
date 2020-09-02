@@ -148,15 +148,31 @@ pub fn error_string(errno: i32) -> String {
 fn main() {
     let opts = Opts::from_args();
 
-    if opts.errno.starts_with("0x") {
-        let errno = opts.errno.trim_start_matches("0x");
-        let errno = i64::from_str_radix(errno, 16);
-        match errno {
-            Ok(errno) => println!("Error({}): {}", opts.errno, error_string(errno as i32)),
-            _ => println!("Unknown."),
+    let mut errno: i32 = 0;
+
+    if opts.errno.to_lowercase().starts_with("0x") {
+        let err0x = opts.errno.to_lowercase();
+        let err0x = err0x.trim_start_matches("0x");
+        let err0x = i64::from_str_radix(err0x, 16);
+        match err0x {
+            Ok(err0x) => errno = err0x as i32,
+            Err(e) => println!("{}", e),
         }
     } else {
-        let errno = opts.errno.parse::<i32>().unwrap();
-        println!("Error({}): {}", opts.errno, error_string(errno));
+        errno = opts.errno.parse::<i32>().unwrap();
     }
+
+    if errno == 0 {
+        return;
+    }
+
+    #[cfg(windows)]
+    unsafe {
+        let dos_errno = ntapi::ntrtl::RtlNtStatusToDosError(errno);
+        if dos_errno != winapi::shared::winerror::ERROR_MR_MID_NOT_FOUND {
+            errno = dos_errno as i32;
+        }
+    }
+
+    println!("Error({}): {}", opts.errno, error_string(errno));
 }
