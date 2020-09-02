@@ -1,16 +1,11 @@
 use std::i64;
+use structopt::StructOpt;
+extern crate libc;
 
-#[cfg(target_os = "windows")]
-use std::ptr;
 #[cfg(target_os = "windows")]
 use winapi::shared::minwindef;
 #[cfg(target_os = "windows")]
 use winapi::um::{libloaderapi, winbase, winnt};
-
-#[cfg(target_os = "linux")]
-extern crate libc;
-
-use structopt::StructOpt;
 
 /// Show error code information
 #[derive(StructOpt, Debug)]
@@ -42,16 +37,16 @@ fn to_wstring(value: &str) -> Vec<u16> {
 
 #[cfg(target_os = "windows")]
 fn error_string_wininet(errno: i32) -> String {
-    let mut err_msg: winnt::LPWSTR = ptr::null_mut();
+    let mut err_msg: winnt::LPWSTR = std::ptr::null_mut();
     let hmodule = unsafe {
         libloaderapi::LoadLibraryExW(
             to_wstring("wininet.dll").as_ptr(),
-            ptr::null_mut(),
+            std::ptr::null_mut(),
             libloaderapi::DONT_RESOLVE_DLL_REFERENCES,
         )
     };
 
-    if hmodule != ptr::null_mut() {
+    if hmodule != std::ptr::null_mut() {
         let ret = unsafe {
             winbase::FormatMessageW(
                 winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -64,7 +59,7 @@ fn error_string_wininet(errno: i32) -> String {
                 winnt::MAKELANGID(winnt::LANG_ENGLISH, winnt::SUBLANG_DEFAULT) as u32,
                 (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
                 0,
-                ptr::null_mut(),
+                std::ptr::null_mut(),
             )
         };
 
@@ -90,19 +85,19 @@ fn error_string_wininet(errno: i32) -> String {
 
 #[cfg(target_os = "windows")]
 fn error_string(errno: i32) -> String {
-    let mut err_msg: winnt::LPWSTR = ptr::null_mut();
+    let mut err_msg: winnt::LPWSTR = std::ptr::null_mut();
     let ret = unsafe {
         winbase::FormatMessageW(
             winbase::FORMAT_MESSAGE_ALLOCATE_BUFFER
                 | winbase::FORMAT_MESSAGE_FROM_SYSTEM
                 | winbase::FORMAT_MESSAGE_IGNORE_INSERTS
                 | winbase::FORMAT_MESSAGE_MAX_WIDTH_MASK,
-            ptr::null_mut(),
+            std::ptr::null_mut(),
             errno as u32,
             winnt::MAKELANGID(winnt::LANG_ENGLISH, winnt::SUBLANG_DEFAULT) as u32,
             (&mut err_msg as *mut winnt::LPWSTR) as winnt::LPWSTR,
             0,
-            ptr::null_mut(),
+            std::ptr::null_mut(),
         )
     };
 
@@ -120,7 +115,10 @@ fn error_string(errno: i32) -> String {
     }
 }
 
-#[cfg(target_os = "linux")]
+// Fix "error[E0425]: cannot find function `error_string` in this scope" on macos.
+// It seems that strerror_r can be used in all `target_os` except windows. See:
+// https://doc.rust-lang.org/reference/conditional-compilation.html#target_os
+#[cfg(not(target_os = "windows"))]
 pub fn error_string(errno: i32) -> String {
     use std::ffi::CStr;
     use std::os::raw::c_char;
